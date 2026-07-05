@@ -387,7 +387,7 @@ LP.CharacterAdded:Connect(function(char)
 end)
 
 -- ============================================================
--- DEFAULT STACK BUTTON POSITIONS
+-- DEFAULT STACK BUTTON POSITIONS (FIXED - 7 buttons, no gaps)
 -- ============================================================
 local BTN_W=58; local BTN_H=58; local BTN_GAP=8; local COLS=2
 local stackDefs = {
@@ -399,11 +399,18 @@ local stackDefs = {
     {key="tpDown",     label="TP\nDOWN"},
     {key="carrySpeed", label="CARRY\nSPEED"},
 }
+-- 7 buttons, 2 columns → 4 rows (last row has 1 button)
 local function getDefaultStackPos(i)
-    local col=(i-1)%COLS
-    local row2=math.floor((i-1)/COLS)
-    return UDim2.new(1,-(COLS*(BTN_W+BTN_GAP)-BTN_GAP+14)+col*(BTN_W+BTN_GAP),
-                     0.5,-(math.ceil(#stackDefs/COLS)*(BTN_H+BTN_GAP)-BTN_GAP)/2+row2*(BTN_H+BTN_GAP))
+    local col = (i-1) % COLS
+    local row = math.floor((i-1) / COLS)
+    local totalRows = math.ceil(#stackDefs / COLS)
+    -- Center the grid horizontally
+    local totalWidth = COLS * (BTN_W + BTN_GAP) - BTN_GAP
+    local startX = 1 - (totalWidth / 2) - 14
+    return UDim2.new(
+        1, startX + col * (BTN_W + BTN_GAP),
+        0.5, -(totalRows * (BTN_H + BTN_GAP) - BTN_GAP) / 2 + row * (BTN_H + BTN_GAP)
+    )
 end
 
 local Steal = { AutoStealEnabled=true, StealRadius=55, StealDuration=0.25, Data={} }
