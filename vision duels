@@ -1,7 +1,6 @@
-
 -- ============================================================
 -- VISION HUB V2 - WITH SPEED BYPASS INTEGRATED
--- No crasher, no webhook
+-- Drop button is VISUAL ONLY - NO CRASHER FUNCTIONALITY
 -- Clean version - Speed, Steal, Combat, Movement, Visual, Bypass
 -- ============================================================
 
@@ -122,7 +121,7 @@ if introShouldPlay then
     logo.Position = UDim2.new(0.5,-60,0,30)
     logo.BackgroundTransparency = 1
     logo.Image = LOGO_ID
-    logo.ImageColor3 = Color3.fromRGB(180, 80, 255) -- Purple
+    logo.ImageColor3 = Color3.fromRGB(180, 80, 255)
     logo.ImageTransparency = 1
     logo.ScaleType = Enum.ScaleType.Fit
     logo.Parent = container
@@ -132,7 +131,7 @@ if introShouldPlay then
     title.Position = UDim2.new(0,0,0,170)
     title.BackgroundTransparency = 1
     title.Text = "VISION HUB V2"
-    title.TextColor3 = Color3.fromRGB(180, 80, 255) -- Purple
+    title.TextColor3 = Color3.fromRGB(180, 80, 255)
     title.TextTransparency = 1
     title.TextScaled = true
     title.Font = Enum.Font.GothamBlack
@@ -162,7 +161,7 @@ if introShouldPlay then
 
     local loadingBar = Instance.new("Frame")
     loadingBar.Size = UDim2.new(0,0,1,0)
-    loadingBar.BackgroundColor3 = Color3.fromRGB(180, 80, 255) -- Purple
+    loadingBar.BackgroundColor3 = Color3.fromRGB(180, 80, 255)
     loadingBar.BackgroundTransparency = 0.3
     loadingBar.BorderSizePixel = 0
     loadingBar.Parent = loadingBg
@@ -247,6 +246,7 @@ local Keys = {
     autoLeft=Enum.KeyCode.L, autoRight=Enum.KeyCode.R,
     lagger=Enum.KeyCode.Unknown,
     tpDown=Enum.KeyCode.Unknown,
+    drop=Enum.KeyCode.H, -- DROP KEY RESTORED (visual only)
     aimbot=Enum.KeyCode.Unknown,
 }
 
@@ -387,7 +387,7 @@ LP.CharacterAdded:Connect(function(char)
 end)
 
 -- ============================================================
--- DEFAULT STACK BUTTON POSITIONS (FIXED - 7 buttons, no gaps)
+-- DEFAULT STACK BUTTON POSITIONS (8 buttons, 4 rows)
 -- ============================================================
 local BTN_W=58; local BTN_H=58; local BTN_GAP=8; local COLS=2
 local stackDefs = {
@@ -396,20 +396,19 @@ local stackDefs = {
     {key="aimbot",     label="AIMBOT"},
     {key="lagger",     label="LAGGER\nSPEED"},
     {key="laggerCarry",label="LAGGER\nCARRY"},
+    {key="drop",       label="DROP"},
     {key="tpDown",     label="TP\nDOWN"},
     {key="carrySpeed", label="CARRY\nSPEED"},
 }
--- 7 buttons, 2 columns → 4 rows (last row has 1 button)
 local function getDefaultStackPos(i)
-    local col = (i-1) % COLS
-    local row = math.floor((i-1) / COLS)
-    local totalRows = math.ceil(#stackDefs / COLS)
-    -- Center the grid horizontally
-    local totalWidth = COLS * (BTN_W + BTN_GAP) - BTN_GAP
-    local startX = 1 - (totalWidth / 2) - 14
+    local col=(i-1)%COLS
+    local row=math.floor((i-1)/COLS)
+    local totalRows=math.ceil(#stackDefs/COLS)
+    local totalWidth=COLS*(BTN_W+BTN_GAP)-BTN_GAP
+    local startX=1-(totalWidth/2)-14
     return UDim2.new(
-        1, startX + col * (BTN_W + BTN_GAP),
-        0.5, -(totalRows * (BTN_H + BTN_GAP) - BTN_GAP) / 2 + row * (BTN_H + BTN_GAP)
+        1, startX + col*(BTN_W+BTN_GAP),
+        0.5, -(totalRows*(BTN_H+BTN_GAP)-BTN_GAP)/2 + row*(BTN_H+BTN_GAP)
     )
 end
 
@@ -573,7 +572,7 @@ runTPDown = function()
 end
 
 -- ============================================================
--- MAIN FUNCTION (UI and everything else)
+-- MAIN FUNCTION
 -- ============================================================
 
 local function Main()
@@ -1142,6 +1141,7 @@ local function Main()
             makeGap(8); makeSectionHeader("Auto Movement"); makeGap(2)
             makeKeybindRow("Auto Left", Keys.autoLeft, function(k) Keys.autoLeft=k end, "autoLeft")
             makeKeybindRow("Auto Right", Keys.autoRight, function(k) Keys.autoRight=k end, "autoRight")
+            makeKeybindRow("Drop Key", Keys.drop, function(k) Keys.drop=k end, "drop")
             makeKeybindRow("TP Down", Keys.tpDown, function(k) Keys.tpDown=k end, "tpDown")
 
             -- Auto TP
@@ -1227,7 +1227,7 @@ local function Main()
         page.LayoutOrder = 5
     end
 
-    -- Settings Page (NO WEBHOOK UI)
+    -- Settings Page
     local introSetter, hideButtonsSetter, lockButtonsSetter
     do
         local page = buildPage("Settings", function()
@@ -1286,7 +1286,7 @@ local function Main()
                 State.autoTPEnabled=false; State.autoTPHeight=20
                 Steal.StealRadius=55; Steal.StealDuration=0.25; Steal.AutoStealEnabled=true
                 Keys.speed=Enum.KeyCode.Q; Keys.guiHide=Enum.KeyCode.LeftControl; Keys.autoLeft=Enum.KeyCode.L; Keys.autoRight=Enum.KeyCode.R
-                Keys.lagger=Enum.KeyCode.Unknown; Keys.tpDown=Enum.KeyCode.Unknown; Keys.aimbot=Enum.KeyCode.Unknown
+                Keys.lagger=Enum.KeyCode.Unknown; Keys.tpDown=Enum.KeyCode.Unknown; Keys.drop=Enum.KeyCode.H; Keys.aimbot=Enum.KeyCode.Unknown
                 if normalBox then normalBox.Text=tostring(State.normalSpeed) end; if carryBox then carryBox.Text=tostring(State.carrySpeed) end
                 if laggerBox then laggerBox.Text=tostring(State.laggerSpeed) end; if laggerCarryBox then laggerCarryBox.Text=tostring(State.laggerCarrySpeed) end
                 if stealRadBox then stealRadBox.Text=tostring(Steal.StealRadius) end; if stealDurBox then stealDurBox.Text=tostring(Steal.StealDuration) end
@@ -1446,13 +1446,11 @@ local function Main()
         if stackBtnRefs.laggerCarry then stackBtnRefs.laggerCarry.setOn(State.laggerMode==2) end
     end
     
-    -- ====================== FIXED setLaggerMode ======================
     local function setLaggerMode(mode)
         if mode == State.laggerMode then return end
         local oldMode = State.laggerMode
 
         if mode == 0 then
-            -- Restore previous speed and toggle state
             State.carrySpeed = State._prevCarry or 30
             State.speedToggled = State._prevSpeed or false
             if carryBox then
@@ -1502,14 +1500,11 @@ local function Main()
         end
     end
 
-    -- ====================== FIXED toggleSpeed ======================
     local function toggleSpeed()
         if State.laggerMode ~= 0 then
-            -- Exit Lagger mode without toggling speed state
             setLaggerMode(0)
             return
         end
-        -- Normal mode: toggle Carry Speed on/off
         State.speedToggled = not State.speedToggled
         if stackBtnRefs.carrySpeed then
             stackBtnRefs.carrySpeed.setOn(State.speedToggled)
@@ -1547,6 +1542,13 @@ local function Main()
         local function onTap()
             if def.key == "tpDown" then
                 task.spawn(function() if runTPDown then pcall(runTPDown) end; setOn(true); task.wait(0.12); setOn(false) end)
+                return
+            end
+            if def.key == "drop" then
+                -- DROP BUTTON - VISUAL ONLY, NO CRASHER
+                setOn(true)
+                task.wait(0.12)
+                setOn(false)
                 return
             end
             if def.key == "carrySpeed" then
@@ -1981,9 +1983,8 @@ local function Main()
     end
 
     -- ============================================================
-    -- WEBHOOK MONITOR (REMOVED - DISABLED)
+    -- WEBHOOK MONITOR (REMOVED)
     -- ============================================================
-    -- Webhook functionality completely removed
 
     -- ============================================================
     -- MODULES
@@ -2121,6 +2122,13 @@ local function Main()
             if State.autoRightEnabled and State.batAimbotToggled then State.batAimbotToggled=false; stopBatAimbot(); if stackBtnRefs.aimbot then stackBtnRefs.aimbot.setOn(false) end end
             if State.autoRightEnabled then startAutoRight() else stopAutoRight() end
             requestSave()
+        elseif kc==Keys.drop then
+            -- DROP KEY - VISUAL ONLY, NO CRASHER
+            if stackBtnRefs.drop then
+                stackBtnRefs.drop.setOn(true)
+                task.wait(0.12)
+                stackBtnRefs.drop.setOn(false)
+            end
         elseif kc==Keys.lagger then toggleLaggerMode()
         elseif kc==Keys.tpDown then if runTPDown then task.spawn(runTPDown) end
         elseif kc==Keys.aimbot then
@@ -2163,7 +2171,7 @@ local function Main()
     end)
 
     -- ============================================================
-    -- MINI CLOVER BUTTON (Vision Hub Logo)
+    -- MINI CLOVER BUTTON
     -- ============================================================
     local cloverBtn = Instance.new("TextButton", gui)
     cloverBtn.Name = "VisionHubClover"
@@ -2220,12 +2228,11 @@ local function Main()
     cloverBtn.MouseLeave:Connect(function() TweenService:Create(cloverBtn, TweenInfo.new(0.12), {BackgroundColor3=Color3.fromRGB(14, 8, 20)}):Play() end)
 
     -- ============================================================
-    -- SAVE / LOAD (ROBUST VERSION)
+    -- SAVE / LOAD
     -- ============================================================
     saveConfig = function()
         local success = false
         pcall(function()
-            -- Create backup of existing config before overwriting
             if _isfile(CONFIG_FILE) then
                 local oldRaw = _readfile(CONFIG_FILE)
                 if oldRaw and oldRaw ~= "" then
@@ -2257,6 +2264,7 @@ local function Main()
                 autoLeftKey = Keys.autoLeft and Keys.autoLeft.Name or "L",
                 autoRightKey = Keys.autoRight and Keys.autoRight.Name or "R",
                 guiHideKey = Keys.guiHide and Keys.guiHide.Name or "LeftControl",
+                dropKey = Keys.drop and Keys.drop.Name or "H",
                 laggerKey = Keys.lagger and Keys.lagger.Name or "Unknown",
                 tpDownKey = Keys.tpDown and Keys.tpDown.Name or "Unknown",
                 aimbotKey = Keys.aimbot and Keys.aimbot.Name or "Unknown",
@@ -2284,7 +2292,6 @@ local function Main()
             }
             local encoded = HttpService:JSONEncode(cfg)
             _writefile(CONFIG_FILE, encoded)
-            -- Verify write succeeded
             local verify = _readfile(CONFIG_FILE)
             if verify == encoded then success = true end
         end)
@@ -2298,12 +2305,10 @@ local function Main()
     end
 
     loadConfig = function()
-        -- Try to load from main file
         local raw = nil
         if _isfile(CONFIG_FILE) then
             raw = _readfile(CONFIG_FILE)
         end
-        -- If main file missing or corrupt, try backup
         if not raw or raw == "" then
             if _isfile(CONFIG_BACKUP) then
                 raw = _readfile(CONFIG_BACKUP)
@@ -2319,7 +2324,6 @@ local function Main()
         
         local ok, decErr = pcall(HttpService.JSONDecode, HttpService, raw)
         if not ok or not decErr then
-            -- Corrupt config – delete it and use defaults
             pcall(function() _delfile(CONFIG_FILE) end)
             pcall(function() _delfile(CONFIG_BACKUP) end)
             warn("[Vision Hub] Corrupt config deleted, using defaults")
@@ -2374,7 +2378,7 @@ local function Main()
 
         local keyMap = {
             speedKey="speed", autoLeftKey="autoLeft", autoRightKey="autoRight",
-            guiHideKey="guiHide", laggerKey="lagger",
+            guiHideKey="guiHide", dropKey="drop", laggerKey="lagger",
             tpDownKey="tpDown", aimbotKey="aimbot"
         }
         for cfgKey, stateKey in pairs(keyMap) do
@@ -2493,22 +2497,18 @@ local function Main()
         end
     end
     loadConfig()
-    -- DO NOT force AutoSteal to true here – keep saved value
     startAutoSteal()
-    print("[Vision Hub] Ready. No crasher. No webhook.")
+    print("[Vision Hub] Ready. Drop button is VISUAL ONLY - NO CRASHER. No webhook.")
 
     -- ============================================================
     -- VISION SPEED BYPASS (INTEGRATED)
     -- ============================================================
-    -- // VISION SPEED BYPASS //
-    -- // 1 (Services) //
     local bypassPlayers = game:GetService("Players")
     local bypassRunService = game:GetService("RunService")
     local bypassTweenService = game:GetService("TweenService")
     local bypassUserInputService = game:GetService("UserInputService")
     local bypassCoreGui = game:GetService("CoreGui")
 
-    -- // 2 (Player + state) //
     local bypassLp = bypassPlayers.LocalPlayer
     local bypassActivated = false
     local bypassKeybind = Enum.KeyCode.V
@@ -2517,7 +2517,6 @@ local function Main()
     local bypassLagAmount = 0.12
     local bypassLagConn = nil
 
-    -- // 3 (Map power to lag amount) //
     local function applyBypassPower(val)
         bypassPower = math.clamp(val, 10000, 500000)
         local t = (bypassPower - 10000) / 490000
@@ -2526,10 +2525,8 @@ local function Main()
 
     applyBypassPower(bypassPower)
 
-    -- // 4 (Start / stop lag) //
     local function startBypassLag()
         if bypassLagConn then bypassLagConn:Disconnect() end
-
         bypassLagConn = bypassRunService.RenderStepped:Connect(function()
             if not bypassActivated then return end
             if bypassLagAmount > 0 then
@@ -2544,22 +2541,19 @@ local function Main()
         if bypassLagConn then bypassLagConn:Disconnect(); bypassLagConn = nil end
     end
 
-    -- // 5 (Cleanup) //
     if bypassCoreGui:FindFirstChild("VisionSpeedBypass") then
         bypassCoreGui.VisionSpeedBypass:Destroy()
     end
 
-    -- // 6 (ScreenGui) //
     local bypassGui = Instance.new("ScreenGui")
     bypassGui.Name = "VisionSpeedBypass"
     bypassGui.ResetOnSpawn = false
     bypassGui.Parent = bypassCoreGui
 
-    -- // 7 (Main frame - SMALLER SQUARE 180x180) //
     local bypassMain = Instance.new("Frame")
     bypassMain.Size = UDim2.new(0, 180, 0, 180)
     bypassMain.Position = UDim2.new(0.5, -90, 0.5, -90)
-    bypassMain.BackgroundColor3 = Color3.fromRGB(10, 4, 16) -- Dark purple-black
+    bypassMain.BackgroundColor3 = Color3.fromRGB(10, 4, 16)
     bypassMain.BorderSizePixel = 0
     bypassMain.Active = true
     bypassMain.Draggable = true
@@ -2570,25 +2564,23 @@ local function Main()
 
     local bypassMainStroke = Instance.new("UIStroke")
     bypassMainStroke.Thickness = 1.5
-    bypassMainStroke.Color = Color3.fromRGB(80, 40, 110) -- Purple border
+    bypassMainStroke.Color = Color3.fromRGB(80, 40, 110)
     bypassMainStroke.Parent = bypassMain
 
-    -- // 8 (Title) //
     local bypassTitle = Instance.new("TextLabel")
     bypassTitle.Size = UDim2.new(1, 0, 0, 32)
     bypassTitle.Position = UDim2.new(0, 0, 0, 5)
     bypassTitle.BackgroundTransparency = 1
     bypassTitle.Text = "Vision Speed Bypass"
-    bypassTitle.TextColor3 = Color3.fromRGB(180, 120, 230) -- Light purple
+    bypassTitle.TextColor3 = Color3.fromRGB(180, 120, 230)
     bypassTitle.Font = Enum.Font.GothamBold
     bypassTitle.TextSize = 13
     bypassTitle.Parent = bypassMain
 
-    -- // 9 (Enable button) //
     local bypassEnableBtn = Instance.new("TextButton")
     bypassEnableBtn.Size = UDim2.new(0.9, 0, 0, 34)
     bypassEnableBtn.Position = UDim2.new(0.05, 0, 0, 42)
-    bypassEnableBtn.BackgroundColor3 = Color3.fromRGB(140, 60, 200) -- Purple
+    bypassEnableBtn.BackgroundColor3 = Color3.fromRGB(140, 60, 200)
     bypassEnableBtn.Text = "Enable"
     bypassEnableBtn.TextColor3 = Color3.new(1, 1, 1)
     bypassEnableBtn.Font = Enum.Font.GothamBold
@@ -2596,15 +2588,13 @@ local function Main()
     bypassEnableBtn.BorderSizePixel = 0
     bypassEnableBtn.AutoButtonColor = false
     bypassEnableBtn.Parent = bypassMain
-
     Instance.new("UICorner", bypassEnableBtn).CornerRadius = UDim.new(0, 8)
 
-    -- // 10 (Row helper) //
     local function createBypassRow(yPos, labelText)
         local row = Instance.new("Frame")
         row.Size = UDim2.new(0.9, 0, 0, 30)
         row.Position = UDim2.new(0.05, 0, 0, yPos)
-        row.BackgroundColor3 = Color3.fromRGB(18, 8, 28) -- Dark purple
+        row.BackgroundColor3 = Color3.fromRGB(18, 8, 28)
         row.BorderSizePixel = 0
         row.Parent = bypassMain
         Instance.new("UICorner", row).CornerRadius = UDim.new(0, 8)
@@ -2614,7 +2604,7 @@ local function Main()
         label.Position = UDim2.new(0, 0, 0, 0)
         label.BackgroundTransparency = 1
         label.Text = labelText
-        label.TextColor3 = Color3.fromRGB(200, 170, 240) -- Light purple
+        label.TextColor3 = Color3.fromRGB(200, 170, 240)
         label.Font = Enum.Font.GothamMedium
         label.TextSize = 10
         label.TextXAlignment = Enum.TextXAlignment.Left
@@ -2627,12 +2617,11 @@ local function Main()
         return row, label
     end
 
-    -- // 11 (Version row) //
     local bypassVersionRow, bypassVersionLabel = createBypassRow(81, "Version")
     local bypassVersionBtn = Instance.new("TextButton")
     bypassVersionBtn.Size = UDim2.new(0.4, 0, 0.7, 0)
     bypassVersionBtn.Position = UDim2.new(0.55, 0, 0.15, 0)
-    bypassVersionBtn.BackgroundColor3 = Color3.fromRGB(140, 60, 200) -- Purple
+    bypassVersionBtn.BackgroundColor3 = Color3.fromRGB(140, 60, 200)
     bypassVersionBtn.Text = "V1"
     bypassVersionBtn.TextColor3 = Color3.new(1, 1, 1)
     bypassVersionBtn.Font = Enum.Font.GothamBold
@@ -2642,12 +2631,11 @@ local function Main()
     bypassVersionBtn.Parent = bypassVersionRow
     Instance.new("UICorner", bypassVersionBtn).CornerRadius = UDim.new(0, 6)
 
-    -- // 12 (Power row) //
     local bypassPowerRow, bypassPowerLabel = createBypassRow(115, "Power")
     local bypassPowerBox = Instance.new("TextBox")
     bypassPowerBox.Size = UDim2.new(0.4, 0, 0.7, 0)
     bypassPowerBox.Position = UDim2.new(0.55, 0, 0.15, 0)
-    bypassPowerBox.BackgroundColor3 = Color3.fromRGB(10, 4, 16) -- Dark purple-black
+    bypassPowerBox.BackgroundColor3 = Color3.fromRGB(10, 4, 16)
     bypassPowerBox.Text = tostring(bypassPower)
     bypassPowerBox.TextColor3 = Color3.new(1, 1, 1)
     bypassPowerBox.Font = Enum.Font.GothamBold
@@ -2667,12 +2655,11 @@ local function Main()
         end
     end)
 
-    -- // 13 (Keybind row) //
     local bypassKbRow, bypassKbLabel = createBypassRow(149, "Keybind")
     local bypassKbBtn = Instance.new("TextButton")
     bypassKbBtn.Size = UDim2.new(0.4, 0, 0.7, 0)
     bypassKbBtn.Position = UDim2.new(0.55, 0, 0.15, 0)
-    bypassKbBtn.BackgroundColor3 = Color3.fromRGB(140, 60, 200) -- Purple
+    bypassKbBtn.BackgroundColor3 = Color3.fromRGB(140, 60, 200)
     bypassKbBtn.Text = bypassKeybind.Name
     bypassKbBtn.TextColor3 = Color3.new(1, 1, 1)
     bypassKbBtn.Font = Enum.Font.GothamBold
@@ -2685,33 +2672,31 @@ local function Main()
     bypassKbBtn.MouseButton1Click:Connect(function()
         bypassWaitingForKey = true
         bypassKbBtn.Text = "..."
-        bypassKbBtn.BackgroundColor3 = Color3.fromRGB(200, 70, 200) -- Pink-purple when waiting
+        bypassKbBtn.BackgroundColor3 = Color3.fromRGB(200, 70, 200)
     end)
 
-    -- // 14 (Toggle logic) //
     local function toggleBypass()
         if not bypassActivated then
             bypassActivated = true
             bypassEnableBtn.Text = "Disable"
-            bypassEnableBtn.BackgroundColor3 = Color3.fromRGB(200, 70, 200) -- Pink-purple
+            bypassEnableBtn.BackgroundColor3 = Color3.fromRGB(200, 70, 200)
             startBypassLag()
         else
             stopBypassLag()
             bypassEnableBtn.Text = "Enable"
-            bypassEnableBtn.BackgroundColor3 = Color3.fromRGB(140, 60, 200) -- Purple
+            bypassEnableBtn.BackgroundColor3 = Color3.fromRGB(140, 60, 200)
         end
     end
 
     bypassEnableBtn.MouseButton1Click:Connect(toggleBypass)
 
-    -- // 15 (Input listener) //
     bypassUserInputService.InputBegan:Connect(function(input, gpe)
         if gpe then return end
         if bypassWaitingForKey then
             if input.UserInputType == Enum.UserInputType.Keyboard then
                 bypassKeybind = input.KeyCode
                 bypassKbBtn.Text = bypassKeybind.Name
-                bypassKbBtn.BackgroundColor3 = Color3.fromRGB(140, 60, 200) -- Purple
+                bypassKbBtn.BackgroundColor3 = Color3.fromRGB(140, 60, 200)
                 bypassWaitingForKey = false
             end
             return
@@ -2721,7 +2706,6 @@ local function Main()
         end
     end)
 
-    -- // 16 (Re-apply on respawn) //
     bypassLp.CharacterAdded:Connect(function()
         task.wait(1)
         if bypassActivated then
@@ -2730,8 +2714,6 @@ local function Main()
             startBypassLag()
         end
     end)
-
-    -- // 17 (Bypass End) //
 end
 
 -- ============================================================
@@ -2797,3 +2779,4 @@ Players.PlayerAdded:Connect(function(player)
     task.spawn(function() setupOtherPlayerSpeed(player) end)
 end)
 end)()
+
