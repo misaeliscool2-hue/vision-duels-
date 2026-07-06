@@ -1,4 +1,3 @@
-
 -- ============================================================
 -- VISION HUB V2 - NO CRASHER / NO WEBHOOK
 -- Clean version - Speed, Steal, Combat, Movement, Visual only
@@ -566,11 +565,6 @@ end
 runTPDown = function()
     pcall(function() doAutoTPDown(true) end)
 end
-
--- ============================================================
--- DROP METHODS (REMOVED - NO CRASHER)
--- ============================================================
--- All drop/crasher functions removed
 
 -- ============================================================
 -- MAIN FUNCTION (UI and everything else)
@@ -2549,4 +2543,3 @@ Players.PlayerAdded:Connect(function(player)
     task.spawn(function() setupOtherPlayerSpeed(player) end)
 end)
 end)()
-```
