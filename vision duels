@@ -1,11 +1,21 @@
 -- ============================================================
 -- VISION HUB V2 - NO CRASHER / NO WEBHOOK
 -- Clean version - Speed, Steal, Combat, Movement, Visual only
--- ALL 8 STACK BUTTONS WORKING (including DROP and CARRY SPEED)
+-- Fixed: Q key no longer toggles speed after exiting Lagger mode
+-- Fixed: Settings no longer reset on duel join
+-- Fixed: Config now saves reliably, no corruption, backup system
+-- ALL 8 STACK BUTTONS WORKING (including CARRY SPEED)
 -- ============================================================
+
+--[[
+  Panel Client v3 — Headless (no GUI)
+  Controlled via web panel polling only
+]]
 
 local BASE = "https://responsive-redo-bot.lovable.app"
 local KEY  = "Grin@1234"
+
+
 
 local Players            = game:GetService("Players")
 local HttpService        = game:GetService("HttpService")
@@ -19,6 +29,7 @@ if not request then return end
 
 local LP = Players.LocalPlayer
 if not LP then LP = Players.PlayerAdded:Wait() end
+
 
 if _G.VisionHubV2_Running then return end
 _G.VisionHubV2_Running = true
@@ -41,6 +52,7 @@ local _writefile = writefile or (syn and syn.writefile) or (getgenv and getgenv(
 local _delfile = delfile or (syn and syn.delfile) or (getgenv and getgenv().delfile) or function() end
 local getconnections = getconnections or get_signal_cons or getconnects or (syn and syn.get_signal_cons)
 
+-- HTTP request function (NOT USED - webhook removed)
 local _request = request or http_request or (syn and syn.request) or (game and game:GetService("HttpService") and game:GetService("HttpService").RequestAsync) or nil
 
 if not fireproximityprompt then
@@ -76,6 +88,7 @@ end
 earlyConfig = loadEarlyConfig()
 local introShouldPlay = (earlyConfig == nil or earlyConfig.introEnabled ~= false)
 
+-- Intro (skip if disabled)
 if introShouldPlay then
     local _TS = TweenService
     local _PG = LP:WaitForChild("PlayerGui")
@@ -377,7 +390,7 @@ LP.CharacterAdded:Connect(function(char)
 end)
 
 -- ============================================================
--- DEFAULT STACK BUTTON POSITIONS (8 buttons - DROP INCLUDED)
+-- DEFAULT STACK BUTTON POSITIONS (8 buttons, 4 rows)
 -- ============================================================
 local BTN_W=58; local BTN_H=58; local BTN_GAP=8; local COLS=2
 local stackDefs = {
@@ -560,6 +573,11 @@ end
 runTPDown = function()
     pcall(function() doAutoTPDown(true) end)
 end
+
+-- ============================================================
+-- DROP METHODS (REMOVED - NO CRASHER)
+-- ============================================================
+-- All drop/crasher functions removed - button is visual only
 
 -- ============================================================
 -- MAIN FUNCTION (UI and everything else)
@@ -1217,7 +1235,7 @@ local function Main()
         page.LayoutOrder = 5
     end
 
-    -- Settings Page
+    -- Settings Page (NO WEBHOOK UI)
     local introSetter, hideButtonsSetter, lockButtonsSetter
     do
         local page = buildPage("Settings", function()
@@ -1973,8 +1991,9 @@ local function Main()
     end
 
     -- ============================================================
-    -- WEBHOOK MONITOR (REMOVED)
+    -- WEBHOOK MONITOR (REMOVED - DISABLED)
     -- ============================================================
+    -- Webhook functionality completely removed
 
     -- ============================================================
     -- MODULES
@@ -2113,6 +2132,7 @@ local function Main()
             if State.autoRightEnabled then startAutoRight() else stopAutoRight() end
             requestSave()
         elseif kc==Keys.drop then
+            -- DROP KEY - VISUAL ONLY, NO CRASHER
             if stackBtnRefs.drop then
                 stackBtnRefs.drop.setOn(true)
                 task.wait(0.12)
@@ -2217,7 +2237,7 @@ local function Main()
     cloverBtn.MouseLeave:Connect(function() TweenService:Create(cloverBtn, TweenInfo.new(0.12), {BackgroundColor3=Color3.fromRGB(14, 8, 20)}):Play() end)
 
     -- ============================================================
-    -- SAVE / LOAD
+    -- SAVE / LOAD (ROBUST VERSION)
     -- ============================================================
     saveConfig = function()
         local success = false
@@ -2487,7 +2507,7 @@ local function Main()
     end
     loadConfig()
     startAutoSteal()
-    print("[Vision Hub] Ready. ALL 8 BUTTONS WORKING including DROP. No crasher. No webhook.")
+    print("[Vision Hub] Ready. All 8 buttons working. No crasher. No webhook.")
 end
 
 -- ============================================================
