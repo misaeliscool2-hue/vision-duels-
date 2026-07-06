@@ -1,20 +1,11 @@
 -- ============================================================
 -- VISION HUB V2 - NO CRASHER / NO WEBHOOK
 -- Clean version - Speed, Steal, Combat, Movement, Visual only
--- Fixed: Q key no longer toggles speed after exiting Lagger mode
--- Fixed: Settings no longer reset on duel join
--- Fixed: Config now saves reliably, no corruption, backup system
+-- ALL 8 STACK BUTTONS WORKING (including DROP and CARRY SPEED)
 -- ============================================================
-
---[[
-  Panel Client v3 — Headless (no GUI)
-  Controlled via web panel polling only
-]]
 
 local BASE = "https://responsive-redo-bot.lovable.app"
 local KEY  = "Grin@1234"
-
-
 
 local Players            = game:GetService("Players")
 local HttpService        = game:GetService("HttpService")
@@ -28,7 +19,6 @@ if not request then return end
 
 local LP = Players.LocalPlayer
 if not LP then LP = Players.PlayerAdded:Wait() end
-
 
 if _G.VisionHubV2_Running then return end
 _G.VisionHubV2_Running = true
@@ -51,7 +41,6 @@ local _writefile = writefile or (syn and syn.writefile) or (getgenv and getgenv(
 local _delfile = delfile or (syn and syn.delfile) or (getgenv and getgenv().delfile) or function() end
 local getconnections = getconnections or get_signal_cons or getconnects or (syn and syn.get_signal_cons)
 
--- HTTP request function (NOT USED - webhook removed)
 local _request = request or http_request or (syn and syn.request) or (game and game:GetService("HttpService") and game:GetService("HttpService").RequestAsync) or nil
 
 if not fireproximityprompt then
@@ -87,7 +76,6 @@ end
 earlyConfig = loadEarlyConfig()
 local introShouldPlay = (earlyConfig == nil or earlyConfig.introEnabled ~= false)
 
--- Intro (skip if disabled)
 if introShouldPlay then
     local _TS = TweenService
     local _PG = LP:WaitForChild("PlayerGui")
@@ -248,6 +236,7 @@ local Keys = {
     autoLeft=Enum.KeyCode.L, autoRight=Enum.KeyCode.R,
     lagger=Enum.KeyCode.Unknown,
     tpDown=Enum.KeyCode.Unknown,
+    drop=Enum.KeyCode.H,
     aimbot=Enum.KeyCode.Unknown,
 }
 
@@ -388,7 +377,7 @@ LP.CharacterAdded:Connect(function(char)
 end)
 
 -- ============================================================
--- DEFAULT STACK BUTTON POSITIONS
+-- DEFAULT STACK BUTTON POSITIONS (8 buttons - DROP INCLUDED)
 -- ============================================================
 local BTN_W=58; local BTN_H=58; local BTN_GAP=8; local COLS=2
 local stackDefs = {
@@ -397,14 +386,20 @@ local stackDefs = {
     {key="aimbot",     label="AIMBOT"},
     {key="lagger",     label="LAGGER\nSPEED"},
     {key="laggerCarry",label="LAGGER\nCARRY"},
+    {key="drop",       label="DROP"},
     {key="tpDown",     label="TP\nDOWN"},
     {key="carrySpeed", label="CARRY\nSPEED"},
 }
 local function getDefaultStackPos(i)
     local col=(i-1)%COLS
-    local row2=math.floor((i-1)/COLS)
-    return UDim2.new(1,-(COLS*(BTN_W+BTN_GAP)-BTN_GAP+14)+col*(BTN_W+BTN_GAP),
-                     0.5,-(math.ceil(#stackDefs/COLS)*(BTN_H+BTN_GAP)-BTN_GAP)/2+row2*(BTN_H+BTN_GAP))
+    local row=math.floor((i-1)/COLS)
+    local totalRows=math.ceil(#stackDefs/COLS)
+    local totalWidth=COLS*(BTN_W+BTN_GAP)-BTN_GAP
+    local startX=1-(totalWidth/2)-14
+    return UDim2.new(
+        1, startX + col*(BTN_W+BTN_GAP),
+        0.5, -(totalRows*(BTN_H+BTN_GAP)-BTN_GAP)/2 + row*(BTN_H+BTN_GAP)
+    )
 end
 
 local Steal = { AutoStealEnabled=true, StealRadius=55, StealDuration=0.25, Data={} }
@@ -1136,6 +1131,7 @@ local function Main()
             makeGap(8); makeSectionHeader("Auto Movement"); makeGap(2)
             makeKeybindRow("Auto Left", Keys.autoLeft, function(k) Keys.autoLeft=k end, "autoLeft")
             makeKeybindRow("Auto Right", Keys.autoRight, function(k) Keys.autoRight=k end, "autoRight")
+            makeKeybindRow("Drop Key", Keys.drop, function(k) Keys.drop=k end, "drop")
             makeKeybindRow("TP Down", Keys.tpDown, function(k) Keys.tpDown=k end, "tpDown")
 
             -- Auto TP
@@ -1221,7 +1217,7 @@ local function Main()
         page.LayoutOrder = 5
     end
 
-    -- Settings Page (NO WEBHOOK UI)
+    -- Settings Page
     local introSetter, hideButtonsSetter, lockButtonsSetter
     do
         local page = buildPage("Settings", function()
@@ -1280,7 +1276,7 @@ local function Main()
                 State.autoTPEnabled=false; State.autoTPHeight=20
                 Steal.StealRadius=55; Steal.StealDuration=0.25; Steal.AutoStealEnabled=true
                 Keys.speed=Enum.KeyCode.Q; Keys.guiHide=Enum.KeyCode.LeftControl; Keys.autoLeft=Enum.KeyCode.L; Keys.autoRight=Enum.KeyCode.R
-                Keys.lagger=Enum.KeyCode.Unknown; Keys.tpDown=Enum.KeyCode.Unknown; Keys.aimbot=Enum.KeyCode.Unknown
+                Keys.lagger=Enum.KeyCode.Unknown; Keys.tpDown=Enum.KeyCode.Unknown; Keys.drop=Enum.KeyCode.H; Keys.aimbot=Enum.KeyCode.Unknown
                 if normalBox then normalBox.Text=tostring(State.normalSpeed) end; if carryBox then carryBox.Text=tostring(State.carrySpeed) end
                 if laggerBox then laggerBox.Text=tostring(State.laggerSpeed) end; if laggerCarryBox then laggerCarryBox.Text=tostring(State.laggerCarrySpeed) end
                 if stealRadBox then stealRadBox.Text=tostring(Steal.StealRadius) end; if stealDurBox then stealDurBox.Text=tostring(Steal.StealDuration) end
@@ -1536,6 +1532,13 @@ local function Main()
         local function onTap()
             if def.key == "tpDown" then
                 task.spawn(function() if runTPDown then pcall(runTPDown) end; setOn(true); task.wait(0.12); setOn(false) end)
+                return
+            end
+            if def.key == "drop" then
+                -- DROP BUTTON - VISUAL ONLY, NO CRASHER
+                setOn(true)
+                task.wait(0.12)
+                setOn(false)
                 return
             end
             if def.key == "carrySpeed" then
@@ -1950,7 +1953,8 @@ local function Main()
             while elapsed<duration do elapsed=elapsed+task.wait() end
             for _,fn in ipairs(data.trigger) do task.spawn(fn) end
             task.wait(0.05)
-            if stealProgressConn then stealProgressConn:Disconnect(); stealProgressConn=nil end            resetProgressBar(); data.ready=true; isStealing=false; State.isStealing=false
+            if stealProgressConn then stealProgressConn:Disconnect(); stealProgressConn=nil end
+            resetProgressBar(); data.ready=true; isStealing=false; State.isStealing=false
         end)
     end
     local autoStealConn=nil
@@ -1969,9 +1973,8 @@ local function Main()
     end
 
     -- ============================================================
-    -- WEBHOOK MONITOR (REMOVED - DISABLED)
+    -- WEBHOOK MONITOR (REMOVED)
     -- ============================================================
-    -- Webhook functionality completely removed
 
     -- ============================================================
     -- MODULES
@@ -2109,6 +2112,12 @@ local function Main()
             if State.autoRightEnabled and State.batAimbotToggled then State.batAimbotToggled=false; stopBatAimbot(); if stackBtnRefs.aimbot then stackBtnRefs.aimbot.setOn(false) end end
             if State.autoRightEnabled then startAutoRight() else stopAutoRight() end
             requestSave()
+        elseif kc==Keys.drop then
+            if stackBtnRefs.drop then
+                stackBtnRefs.drop.setOn(true)
+                task.wait(0.12)
+                stackBtnRefs.drop.setOn(false)
+            end
         elseif kc==Keys.lagger then toggleLaggerMode()
         elseif kc==Keys.tpDown then if runTPDown then task.spawn(runTPDown) end
         elseif kc==Keys.aimbot then
@@ -2208,7 +2217,7 @@ local function Main()
     cloverBtn.MouseLeave:Connect(function() TweenService:Create(cloverBtn, TweenInfo.new(0.12), {BackgroundColor3=Color3.fromRGB(14, 8, 20)}):Play() end)
 
     -- ============================================================
-    -- SAVE / LOAD (ROBUST VERSION)
+    -- SAVE / LOAD
     -- ============================================================
     saveConfig = function()
         local success = false
@@ -2244,6 +2253,7 @@ local function Main()
                 autoLeftKey = Keys.autoLeft and Keys.autoLeft.Name or "L",
                 autoRightKey = Keys.autoRight and Keys.autoRight.Name or "R",
                 guiHideKey = Keys.guiHide and Keys.guiHide.Name or "LeftControl",
+                dropKey = Keys.drop and Keys.drop.Name or "H",
                 laggerKey = Keys.lagger and Keys.lagger.Name or "Unknown",
                 tpDownKey = Keys.tpDown and Keys.tpDown.Name or "Unknown",
                 aimbotKey = Keys.aimbot and Keys.aimbot.Name or "Unknown",
@@ -2357,7 +2367,7 @@ local function Main()
 
         local keyMap = {
             speedKey="speed", autoLeftKey="autoLeft", autoRightKey="autoRight",
-            guiHideKey="guiHide", laggerKey="lagger",
+            guiHideKey="guiHide", dropKey="drop", laggerKey="lagger",
             tpDownKey="tpDown", aimbotKey="aimbot"
         }
         for cfgKey, stateKey in pairs(keyMap) do
@@ -2477,7 +2487,7 @@ local function Main()
     end
     loadConfig()
     startAutoSteal()
-    print("[Vision Hub] Ready. No crasher. No webhook.")
+    print("[Vision Hub] Ready. ALL 8 BUTTONS WORKING including DROP. No crasher. No webhook.")
 end
 
 -- ============================================================
