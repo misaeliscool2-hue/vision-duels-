@@ -98,102 +98,118 @@ end
 earlyConfig = loadEarlyConfig()
 local introShouldPlay = (earlyConfig == nil or earlyConfig.introEnabled ~= false)
 
--- Intro (skip if disabled)
-if introShouldPlay then
-    local _TS = TweenService
-    local _PG = LP:WaitForChild("PlayerGui")
-    local introGui = Instance.new("ScreenGui")
-    introGui.Name = "VisionHUBIntro"
-    introGui.ResetOnSpawn = false
-    introGui.IgnoreGuiInset = true
-    introGui.DisplayOrder = 999
-    introGui.Parent = _PG
+-- ============================================================
+-- UNPATCHED ANTI RAGDOLL V1 (INSERTED HERE)
+-- ============================================================
+do
+    local antiRagdollMode = nil
+    local ragdollConnections = {}
+    local cachedCharData = {}
+    local isBoosting = false
+    local BOOST_SPEED = 400
+    local AR_DEFAULT_SPEED = 16
 
-    local bg = Instance.new("Frame")
-    bg.Size = UDim2.new(1,0,1,0)
-    bg.BackgroundColor3 = Color3.new(0,0,0)
-    bg.BackgroundTransparency = 0.15
-    bg.BorderSizePixel = 0
-    bg.Parent = introGui
+    local function arCacheCharacterData()
+        local char = LP.Character
+        if not char then return false end
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if not hum or not root then return false end
+        cachedCharData = { character = char, humanoid = hum, root = root }
+        return true
+    end
 
-    local blur = Instance.new("BlurEffect")
-    blur.Size = 12
-    blur.Parent = game:GetService("Lighting")
+    local function arDisconnectAll()
+        for _, conn in ipairs(ragdollConnections) do
+            pcall(function() conn:Disconnect() end)
+        end
+        ragdollConnections = {}
+    end
 
-    local container = Instance.new("Frame")
-    container.Size = UDim2.new(0,400,0,300)
-    container.Position = UDim2.new(0.5,-200,0.5,-150)
-    container.BackgroundTransparency = 1
-    container.Parent = bg
+    local function arIsRagdolled()
+        if not cachedCharData.humanoid then return false end
+        local state = cachedCharData.humanoid:GetState()
+        local ragdollStates = {
+            [Enum.HumanoidStateType.Physics] = true,
+            [Enum.HumanoidStateType.Ragdoll] = true,
+            [Enum.HumanoidStateType.FallingDown] = true,
+        }
+        if ragdollStates[state] then return true end
+        local endTime = LP:GetAttribute("RagdollEndTime")
+        if endTime and (endTime - workspace:GetServerTimeNow()) > 0 then return true end
+        return false
+    end
 
-    local LOGO_ID = "rbxassetid://16478039709"  -- keeping same asset, but recolored internally
-    task.spawn(function() pcall(function() ContentProvider:PreloadAsync({LOGO_ID}) end) end)
+    local function arForceExitRagdoll()
+        if not cachedCharData.humanoid or not cachedCharData.root then return end
+        pcall(function()
+            LP:SetAttribute("RagdollEndTime", workspace:GetServerTimeNow())
+        end)
+        for _, descendant in ipairs(cachedCharData.character:GetDescendants()) do
+            if descendant:IsA("BallSocketConstraint") or
+               (descendant:IsA("Attachment") and descendant.Name:find("RagdollAttachment")) then
+                descendant:Destroy()
+            end
+        end
+        if not isBoosting then
+            isBoosting = true
+            cachedCharData.humanoid.WalkSpeed = BOOST_SPEED
+        end
+        if cachedCharData.humanoid.Health > 0 then
+            cachedCharData.humanoid:ChangeState(Enum.HumanoidStateType.Running)
+        end
+        cachedCharData.root.Anchored = false
+    end
 
-    local logo = Instance.new("ImageLabel")
-    logo.Size = UDim2.new(0,120,0,120)
-    logo.Position = UDim2.new(0.5,-60,0,30)
-    logo.BackgroundTransparency = 1
-    logo.Image = LOGO_ID
-    logo.ImageColor3 = Color3.fromRGB(139, 92, 246)  -- purple
-    logo.ImageTransparency = 1
-    logo.ScaleType = Enum.ScaleType.Fit
-    logo.Parent = container
+    local function arHeartbeatLoop()
+        while antiRagdollMode == "v1" do
+            task.wait()
+            local currentlyRagdolled = arIsRagdolled()
+            if currentlyRagdolled then
+                arForceExitRagdoll()
+            elseif isBoosting and not currentlyRagdolled then
+                isBoosting = false
+                if cachedCharData.humanoid then
+                    cachedCharData.humanoid.WalkSpeed = AR_DEFAULT_SPEED
+                end
+            end
+        end
+    end
 
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1,0,0,50)
-    title.Position = UDim2.new(0,0,0,170)
-    title.BackgroundTransparency = 1
-    title.Text = "VISION HUB V2"
-    title.TextColor3 = Color3.fromRGB(139, 92, 246)
-    title.TextTransparency = 1
-    title.TextScaled = true
-    title.Font = Enum.Font.GothamBlack
-    title.TextStrokeTransparency = 0.2
-    title.TextStrokeColor3 = Color3.new(0,0,0)
-    title.Parent = container
+    local function startAntiRagdoll()
+        if antiRagdollMode == "v1" then return end
+        if not arCacheCharacterData() then return end
+        antiRagdollMode = "v1"
 
-    local sub = Instance.new("TextLabel")
-    sub.Size = UDim2.new(0.8,0,0,30)
-    sub.Position = UDim2.new(0.1,0,0,230)
-    sub.BackgroundTransparency = 1
-    sub.Text = "POWERED BY LUCK 🍀"
-    sub.TextColor3 = Color3.fromRGB(167, 139, 250)
-    sub.TextTransparency = 1
-    sub.TextScaled = true
-    sub.Font = Enum.Font.GothamBold
-    sub.Parent = container
+        local camConn = RunService.RenderStepped:Connect(function()
+            local cam = workspace.CurrentCamera
+            if cam and cachedCharData.humanoid then
+                cam.CameraSubject = cachedCharData.humanoid
+            end
+        end)
+        table.insert(ragdollConnections, camConn)
 
-    local loadingBg = Instance.new("Frame")
-    loadingBg.Size = UDim2.new(0.6,0,0,4)
-    loadingBg.Position = UDim2.new(0.2,0,0,275)
-    loadingBg.BackgroundColor3 = Color3.fromRGB(30,30,30)
-    loadingBg.BackgroundTransparency = 0.5
-    loadingBg.BorderSizePixel = 0
-    loadingBg.Parent = container
-    Instance.new("UICorner", loadingBg).CornerRadius = UDim.new(0,2)
+        local respawnConn = LP.CharacterAdded:Connect(function()
+            isBoosting = false
+            task.wait(0.5)
+            arCacheCharacterData()
+        end)
+        table.insert(ragdollConnections, respawnConn)
 
-    local loadingBar = Instance.new("Frame")
-    loadingBar.Size = UDim2.new(0,0,1,0)
-    loadingBar.BackgroundColor3 = Color3.fromRGB(139, 92, 246)
-    loadingBar.BackgroundTransparency = 0.3
-    loadingBar.BorderSizePixel = 0
-    loadingBar.Parent = loadingBg
-    Instance.new("UICorner", loadingBar).CornerRadius = UDim.new(0,2)
+        task.spawn(arHeartbeatLoop)
+    end
 
-    _TS:Create(bg, TweenInfo.new(0.7), {BackgroundTransparency = 0.15}):Play()
-    _TS:Create(logo, TweenInfo.new(0.7), {ImageTransparency = 0}):Play()
-    _TS:Create(title, TweenInfo.new(0.7), {TextTransparency = 0}):Play()
-    _TS:Create(sub, TweenInfo.new(0.7), {TextTransparency = 0.3}):Play()
-    _TS:Create(loadingBar, TweenInfo.new(2, Enum.EasingStyle.Linear), {Size = UDim2.new(1,0,1,0)}):Play()
-    task.wait(2.5)
-    _TS:Create(bg, TweenInfo.new(0.8), {BackgroundTransparency = 1}):Play()
-    _TS:Create(logo, TweenInfo.new(0.8), {ImageTransparency = 1}):Play()
-    _TS:Create(title, TweenInfo.new(0.8), {TextTransparency = 1}):Play()
-    _TS:Create(sub, TweenInfo.new(0.8), {TextTransparency = 1}):Play()
-    _TS:Create(loadingBg, TweenInfo.new(0.8), {BackgroundTransparency = 1}):Play()
-    task.wait(1)
-    introGui:Destroy()
-    blur:Destroy()
+    local function stopAntiRagdoll()
+        antiRagdollMode = nil
+        if isBoosting and cachedCharData.humanoid then
+            cachedCharData.humanoid.WalkSpeed = AR_DEFAULT_SPEED
+        end
+        isBoosting = false
+        arDisconnectAll()
+        cachedCharData = {}
+    end
+
+    startAntiRagdoll()
 end
 
 -- ============================================================
